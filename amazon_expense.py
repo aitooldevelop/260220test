@@ -261,33 +261,79 @@ def get_receipt_url(order_id: str) -> str:
 
 
 def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict]:
-    """注文詳細ページから商品情報を取得する。"""
+    """注文詳細ページから商品情報を取得する。
+
+    商品ごとのコンテナ要素を基準に、名前と価格をペアで抽出する。
+    ページ全体からセレクタで取得するとおすすめ商品等のノイズを拾うため、
+    各商品行（.a-fixed-left-grid等）の中から個別に取得する。
+    """
     url = get_order_detail_url(order_id)
     safe_goto(page, url)
 
-    items = []
+    # JavaScriptで商品コンテナごとに名前・価格をペアで抽出する
+    extracted = page.evaluate("""() => {
+        const results = [];
+        const seen = new Set();
 
-    # 商品名を取得 - 複数のセレクタを試す
-    product_elements = []
-    product_selectors = [
-        ".yohtmlc-product-title",
-        "a[class*='product-title']",
-        ".a-link-normal[href*='/dp/'] .a-text-bold",
-        ".a-link-normal[href*='/gp/product/']",
-        "[class*='item'] .a-link-normal",
-    ]
+        // おすすめ・カルーセル等の除外対象セクションか判定
+        function isInExcludedSection(el) {
+            let node = el;
+            for (let i = 0; i < 20; i++) {
+                node = node.parentElement;
+                if (!node) return false;
+                const cls = (node.getAttribute('class') || '').toLowerCase();
+                const id = (node.getAttribute('id') || '').toLowerCase();
+                if (cls.includes('recommendation') || cls.includes('also-bought') ||
+                    cls.includes('sims-') || cls.includes('a-carousel') ||
+                    cls.includes('rhf-') || cls.includes('bundleV2') ||
+                    id.includes('recommendation') || id.includes('similarities') ||
+                    id.includes('rhf') || id.includes('carousel')) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-    for selector in product_selectors:
-        product_elements = page.query_selector_all(selector)
-        if product_elements:
-            break
+        // 商品リンクを起点にコンテナを探す
+        const productLinks = document.querySelectorAll(
+            'a[href*="/dp/"], a[href*="/gp/product/"]'
+        );
 
-    if not product_elements:
-        # フォールバック: /dp/ リンクのテキストから商品名を取得
-        product_elements = page.query_selector_all("a[href*='/dp/']")
-        product_elements = [
-            el for el in product_elements if el.inner_text().strip()
-        ]
+        for (const link of productLinks) {
+            const name = link.textContent.trim();
+            if (!name || name.length < 2 || seen.has(name)) continue;
+            if (isInExcludedSection(link)) continue;
+
+            // 親コンテナを探す（商品行）
+            let container = link;
+            for (let i = 0; i < 10; i++) {
+                container = container.parentElement;
+                if (!container) break;
+                const cls = container.getAttribute('class') || '';
+                if (cls.includes('a-fixed-left-grid') ||
+                    cls.includes('yohtmlc-item') ||
+                    cls.includes('shipment-item')) {
+                    break;
+                }
+            }
+
+            // コンテナ内の価格を取得
+            let price = '';
+            if (container) {
+                const priceEl = container.querySelector(
+                    '.a-color-price, .a-price .a-offscreen'
+                );
+                if (priceEl) {
+                    price = priceEl.textContent.trim();
+                }
+            }
+
+            seen.add(name);
+            results.push({ name: name, price: price });
+        }
+
+        return results;
+    }""")
 
     # 販売元を取得
     seller = "Amazon.co.jp"
@@ -304,16 +350,16 @@ def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict
                 seller = seller_text
                 break
 
-    # 全体のテキストから販売元を探す（フォールバック）
     if seller == "Amazon.co.jp":
         page_text = page.inner_text("body")
         m = re.search(r"(?:販売|出荷)[：:元]\s*(.+?)(?:\n|$)", page_text)
         if m:
             seller = m.group(1).strip()
 
-    # 送料を取得
-    shipping = 0
+    # 送料・手数料・ポイントをページテキストから取得
     page_text = page.inner_text("body")
+
+    shipping = 0
     m = re.search(r"配送料[・&\s]*手数料[：:\s]*￥?([\d,]+)", page_text)
     if m:
         shipping = int(m.group(1).replace(",", ""))
@@ -322,39 +368,21 @@ def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict
         if m:
             shipping = int(m.group(1).replace(",", ""))
 
-    # 手数料を取得
     fee = 0
     m = re.search(r"手数料[：:\s]*￥?([\d,]+)", page_text)
     if m:
         fee = int(m.group(1).replace(",", ""))
 
-    # ポイント利用を取得
     points = 0
     m = re.search(r"ポイント[：:\s]*-?￥?([\d,]+)", page_text)
     if m:
         points = int(m.group(1).replace(",", ""))
 
-    # 各商品の価格を取得
-    price_elements = page.query_selector_all(
-        ".a-color-price, [class*='price'] .a-text-bold"
-    )
-    prices = []
-    for el in price_elements:
-        price_text = el.inner_text().strip()
-        price = parse_price(price_text)
-        if price > 0:
-            prices.append(price)
-
     # 商品ごとの情報を構築
-    for i, product_el in enumerate(product_elements):
-        product_name = product_el.inner_text().strip()
-        if not product_name:
-            continue
-
-        # 価格の割り当て
-        tax_included = prices[i] if i < len(prices) else 0
-
-        # 税抜き価格（10%で計算）
+    items = []
+    for i, product in enumerate(extracted):
+        product_name = product["name"]
+        tax_included = parse_price(product["price"])
         tax_excluded = math.floor(tax_included / 1.1) if tax_included else 0
 
         item = {
@@ -363,7 +391,7 @@ def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict
             "店名": seller,
             "税込価格": tax_included,
             "税抜価格": tax_excluded,
-            "送料": shipping if i == 0 else 0,  # 送料は最初の商品にのみ記録
+            "送料": shipping if i == 0 else 0,
             "手数料": fee if i == 0 else 0,
             "ポイント値引き": -points if i == 0 and points > 0 else 0,
             "注文番号": order_id,
@@ -373,8 +401,6 @@ def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict
 
     # 商品が見つからなかった場合のフォールバック
     if not items:
-        # ページタイトルや見出しから情報を取得
-        title = page.title()
         items.append(
             {
                 "注文日": order_date,
