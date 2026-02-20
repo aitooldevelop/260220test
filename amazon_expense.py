@@ -119,6 +119,38 @@ def wait_for_login(page: Page):
     print("自動取得を開始します...\n")
 
 
+def wait_for_verification(page: Page):
+    """追加認証（取引承認・2段階認証）が表示された場合、完了を待つ。"""
+    verification_patterns = ["/ap/cvf/", "/ap/mfa", "/ap/challenge"]
+    current_url = page.url
+    if any(pat in current_url for pat in verification_patterns):
+        print("\n" + "=" * 60)
+        print("追加の本人確認が求められています。")
+        print("ブラウザで認証を完了してください。")
+        print("完了したらここでEnterキーを押してください。")
+        print("=" * 60)
+        input("\n>>> Enterキーを押して続行...")
+        page.wait_for_timeout(2000)
+
+
+def safe_goto(page: Page, url: str):
+    """ページ遷移を行い、認証リダイレクトが発生した場合はユーザーの対応を待つ。"""
+    try:
+        page.goto(url, wait_until="domcontentloaded")
+    except Exception as e:
+        if "interrupted by another navigation" in str(e):
+            # 認証ページへのリダイレクトで中断された場合
+            page.wait_for_timeout(3000)
+            wait_for_verification(page)
+            # 認証完了後、元のURLに再遷移
+            page.goto(url, wait_until="domcontentloaded")
+        else:
+            raise
+    page.wait_for_timeout(2000)
+    # 遷移後にも認証ページに飛ばされていないか確認
+    wait_for_verification(page)
+
+
 def navigate_to_order_history(page: Page, year: int):
     """注文履歴ページに遷移する（年指定）。"""
     params = {
@@ -127,8 +159,7 @@ def navigate_to_order_history(page: Page, year: int):
         "disableCsd": "no-hierarchies",
     }
     url = f"{AMAZON_ORDER_HISTORY}?{urlencode(params)}"
-    page.goto(url, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    safe_goto(page, url)
 
 
 def get_order_cards(page: Page) -> list:
@@ -232,8 +263,7 @@ def get_receipt_url(order_id: str) -> str:
 def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict]:
     """注文詳細ページから商品情報を取得する。"""
     url = get_order_detail_url(order_id)
-    page.goto(url, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    safe_goto(page, url)
 
     items = []
 
@@ -366,8 +396,7 @@ def scrape_order_detail(page: Page, order_id: str, order_date: str) -> list[dict
 def save_receipt_pdf(page: Page, order_id: str, order_date: str, product_name: str) -> str:
     """領収書/購入明細書をPDFとして保存する。"""
     url = get_receipt_url(order_id)
-    page.goto(url, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    safe_goto(page, url)
 
     safe_name = sanitize_filename(product_name)
     filename = f"{order_date}_{safe_name}.pdf"
