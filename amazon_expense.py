@@ -124,6 +124,7 @@ def navigate_to_order_history(page: Page, year: int):
     params = {
         "orderFilter": f"year-{year}",
         "startIndex": "0",
+        "disableCsd": "no-hierarchies",
     }
     url = f"{AMAZON_ORDER_HISTORY}?{urlencode(params)}"
     page.goto(url, wait_until="domcontentloaded")
@@ -136,11 +137,12 @@ def get_order_cards(page: Page) -> list:
     Amazonはクラス名を頻繁に変更するため、複数のセレクタを試行する。
     """
     selectors = [
+        ".js-order-card",
         ".order-card",
-        ".order-info",
+        "#ordersContainer > .a-box-group",
+        ".order-card__list > .js-order-card",
         "[class*='order-card']",
         ".a-box-group .a-box",
-        ".js-order-card",
     ]
 
     for selector in selectors:
@@ -183,9 +185,9 @@ def get_order_cards(page: Page) -> list:
 
 def extract_order_number_from_card(card) -> str | None:
     """注文カードから注文番号を抽出する。"""
-    # 注文番号のパターン: xxx-xxxxxxx-xxxxxxx
+    # 注文番号のパターン: xxx-xxxxxxx-xxxxxxx（通常注文）またはDxx-xxxxxxx-xxxxxxx（デジタル注文）
     text = card.inner_text()
-    m = re.search(r"\d{3}-\d{7}-\d{7}", text)
+    m = re.search(r"[D\d]\d{2}-\d{7}-\d{7}", text)
     return m.group(0) if m else None
 
 
@@ -216,8 +218,14 @@ def get_order_detail_url(order_id: str) -> str:
 
 
 def get_receipt_url(order_id: str) -> str:
-    """領収書/購入明細書ページのURLを生成する。"""
-    params = {"orderID": order_id}
+    """領収書/購入明細書ページのURLを生成する。
+
+    デジタル注文（注文番号が"D"で始まる）は別のURLパターンを使用する。
+    """
+    params = {"ie": "UTF8", "orderID": order_id}
+    if order_id.startswith("D"):
+        params["print"] = "1"
+        return f"{AMAZON_BASE}/gp/digital/your-account/order-summary.html?{urlencode(params)}"
     return f"{AMAZON_BASE}/gp/css/summary/print.html?{urlencode(params)}"
 
 
@@ -423,7 +431,7 @@ def collect_order_ids_from_history(
         if not cards:
             # カードが見つからない場合、ページ全体のテキストから注文番号を探す
             page_text = page.inner_text("body")
-            order_ids = re.findall(r"\d{3}-\d{7}-\d{7}", page_text)
+            order_ids = re.findall(r"[D\d]\d{2}-\d{7}-\d{7}", page_text)
             dates = re.findall(
                 r"(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日", page_text
             )
