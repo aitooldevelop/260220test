@@ -1,0 +1,485 @@
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #dbeafe;
+    --danger: #dc2626;
+    --danger-hover: #b91c1c;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Screen management */
+.screen {
+    display: none;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* Header */
+header {
+    margin-bottom: 24px;
+}
+
+header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 8px;
+    word-break: break-all;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--bg);
+}
+
+.btn-icon {
+    background: none;
+    color: var(--primary);
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.btn-delete {
+    background: none;
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    font-size: 18px;
+    border-radius: 50%;
+    min-width: auto;
+}
+
+.btn-delete:hover {
+    background: #fef2f2;
+    color: var(--danger);
+}
+
+.btn-voice {
+    background: var(--primary);
+    color: white;
+    padding: 12px 24px;
+    font-size: 15px;
+}
+
+.btn-voice:hover {
+    background: var(--primary-hover);
+}
+
+.btn-complete {
+    background: var(--danger);
+    color: white;
+    padding: 12px 24px;
+    font-size: 15px;
+}
+
+.btn-complete:hover {
+    background: var(--danger-hover);
+}
+
+.btn.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.actions .btn {
+    width: 100%;
+}
+
+/* Discussion list */
+.discussion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.discussion-item {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.discussion-item:hover {
+    box-shadow: var(--shadow);
+}
+
+.discussion-info {
+    flex: 1;
+    padding: 16px;
+    cursor: pointer;
+}
+
+.discussion-item-title {
+    font-weight: 500;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.discussion-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--text-secondary);
+}
+
+.empty-state .hint {
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Agenda section */
+.agenda-section {
+    margin-bottom: 24px;
+}
+
+.agenda-section textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    resize: vertical;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+}
+
+.agenda-section textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.agenda-section .btn-primary {
+    width: 100%;
+}
+
+.agenda-section.compact {
+    background: var(--primary-light);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+}
+
+.agenda-section.compact textarea {
+    min-height: 0;
+    height: auto;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    resize: none;
+    font-size: 14px;
+    color: var(--text);
+    pointer-events: none;
+}
+
+.agenda-section.compact .btn-primary {
+    display: none;
+}
+
+/* Current question */
+.current-question {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+}
+
+.question-text {
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.voice-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.voice-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #fef3c7;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #92400e;
+}
+
+.recording-indicator {
+    width: 10px;
+    height: 10px;
+    background: #dc2626;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.transcript-preview {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-height: 60px;
+    white-space: pre-wrap;
+}
+
+/* Q&A list */
+.qa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.qa-item {
+    border-left: 3px solid var(--primary);
+    padding-left: 16px;
+}
+
+.qa-question {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    display: flex;
+    gap: 8px;
+}
+
+.qa-answer {
+    font-size: 15px;
+    display: flex;
+    gap: 8px;
+}
+
+.qa-answer.skipped {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.qa-label {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--primary);
+    min-width: 24px;
+    flex-shrink: 0;
+}
+
+/* Loading */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    color: var(--text-secondary);
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 100;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-content h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.modal-content p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.modal-content textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    margin-bottom: 16px;
+}
+
+.modal-content textarea:focus,
+.modal-content input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Hidden utility */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .screen {
+        padding: 16px 12px;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+
+    .question-text {
+        font-size: 15px;
+    }
+
+    .voice-controls {
+        flex-direction: column;
+    }
+
+    .voice-controls .btn {
+        width: 100%;
+    }
+}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Brainstorm - 音声ブレインストーミング</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Main Screen -->
+    <div id="main-screen" class="screen active">
+        <header>
+            <h1>Voice Brainstorm</h1>
+            <p class="subtitle">音声で壁打ちブレインストーミング</p>
+        </header>
+        <div class="actions">
+            <button id="btn-new-discussion" class="btn btn-primary">新しい議論を始める</button>
+            <button id="btn-master-prompt" class="btn btn-secondary">マスタープロンプト設定</button>
+            <button id="btn-api-key" class="btn btn-secondary">API キー設定</button>
+        </div>
+        <div id="discussion-list" class="discussion-list"></div>
+    </div>
+
+    <!-- Discussion Screen -->
+    <div id="discussion-screen" class="screen">
+        <header>
+            <button id="btn-back" class="btn btn-icon">← 戻る</button>
+            <h2 id="discussion-title">議論</h2>
+        </header>
+        <div id="agenda-section" class="agenda-section">
+            <textarea id="agenda-input" placeholder="議論したいアジェンダを入力してください..."></textarea>
+            <button id="btn-start" class="btn btn-primary">スタート</button>
+        </div>
+        <div id="qa-section" class="qa-section hidden">
+            <div id="current-question" class="current-question hidden">
+                <div class="question-text"></div>
+                <div class="voice-controls">
+                    <button id="btn-voice" class="btn btn-voice">音声入力</button>
+                    <button id="btn-complete" class="btn btn-complete hidden">完了</button>
+                    <button id="btn-next" class="btn btn-secondary">NEXT</button>
+                </div>
+                <div id="voice-status" class="voice-status hidden">
+                    <div class="recording-indicator"></div>
+                    <span>音声入力中...</span>
+                </div>
+                <div id="transcript-preview" class="transcript-preview hidden"></div>
+            </div>
+            <div id="qa-list" class="qa-list"></div>
+        </div>
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <span>質問を生成中...</span>
+        </div>
+    </div>
+
+    <!-- Master Prompt Modal -->
+    <div id="modal-master-prompt" class="modal hidden">
+        <div class="modal-content">
+            <h3>マスタープロンプト設定</h3>
+            <p>質問生成のベースとなるプロンプトを設定します。全ての議論に適用されます。</p>
+            <textarea id="master-prompt-input" placeholder="例: ビジネスの観点から深掘りする質問をしてください。特に市場性と実現可能性を重視してください。"></textarea>
+            <div class="modal-actions">
+                <button id="btn-save-prompt" class="btn btn-primary">保存</button>
+                <button id="btn-cancel-prompt" class="btn btn-secondary">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="modal-api-key" class="modal hidden">
+        <div class="modal-content">
+            <h3>Gemini API キー設定</h3>
+            <p>Google AI Studio から取得したAPIキーを入力してください。</p>
+            <input type="password" id="api-key-input" placeholder="APIキーを入力...">
+            <div class="modal-actions">
+                <button id="btn-save-api-key" class="btn btn-primary">保存</button>
+                <button id="btn-cancel-api-key" class="btn btn-secondary">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/gemini.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
